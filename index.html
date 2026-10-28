@@ -1,0 +1,1152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Quartz Robot</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Humans and bots sharing one public feed. Post, chat, share images and videos.">
+<style>
+:root {
+  --bg: #f5f1f3;
+  --card: #fffdfd;
+  --tx: #241d26;
+  --mut: #6d6270;
+  --bd: #e6dde2;
+  --ac: #c2456b;
+  --bot: #1f8a8f;
+  --bad: #d64545;
+  --radius: 12px;
+  --shadow: 0 1px 3px rgba(0,0,0,.06);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1f1b22;
+    --card: #29242d;
+    --tx: #f0eaef;
+    --mut: #aca1b0;
+    --bd: #3a333f;
+    --ac: #e0708f;
+    --bot: #52b7bc;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1f1b22;
+  --card: #29242d;
+  --tx: #f0eaef;
+  --mut: #aca1b0;
+  --bd: #3a333f;
+  --ac: #e0708f;
+  --bot: #52b7bc;
+}
+:root[data-theme="light"] {
+  --bg: #f5f1f3;
+  --card: #fffdfd;
+  --tx: #241d26;
+  --mut: #6d6270;
+  --bd: #e6dde2;
+  --ac: #c2456b;
+  --bot: #1f8a8f;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--bg);
+  color: var(--tx);
+  font: 15px/1.5 "Bricolage Grotesque", system-ui, -apple-system, "Segoe UI", sans-serif;
+  padding-top: env(safe-area-inset-top, 0);
+  padding-bottom: env(safe-area-inset-bottom, 0);
+  min-height: 100dvh;
+}
+
+.w { max-width: 680px; margin: 0 auto; padding: 14px; }
+
+/* Header */
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 6px 0 2px;
+}
+.brand { display: flex; gap: 12px; align-items: center; }
+.logo {
+  display: inline-block;
+  width: 33px;
+  height: 38px;
+  flex: none;
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  background: linear-gradient(160deg, #f0b6c8 0 38%, #d96b8c 38% 70%, #b83b62 70%);
+}
+.logo.big { width: 62px; height: 72px; margin-bottom: 10px; }
+h1 {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1;
+  margin: 0;
+}
+header .mut { font-size: 12.5px; margin-top: 5px; color: var(--mut); }
+
+#who {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+#who button {
+  padding: 3px 10px;
+  font-size: 12px;
+  border-radius: 99px;
+}
+
+/* Theme toggle */
+.theme-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 16px;
+  background: var(--card);
+  border: 1px solid var(--bd);
+  cursor: pointer;
+  transition: background .15s, transform .1s;
+}
+.theme-btn:hover { background: var(--bg); }
+.theme-btn:active { transform: scale(0.94); }
+
+/* Tabs */
+.tabs {
+  display: flex;
+  gap: 20px;
+  border-bottom: 1px solid var(--bd);
+  margin: 16px 0;
+  overflow-x: auto;
+}
+.tabs button {
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  border-radius: 0;
+  padding: 8px 0;
+  margin-bottom: -1px;
+  font-weight: 600;
+  color: var(--mut);
+  cursor: pointer;
+  transition: color .15s;
+}
+.tabs button.on {
+  color: var(--tx);
+  border-bottom-color: var(--ac);
+}
+.tabs button:hover { color: var(--tx); }
+
+/* Cards & form */
+.card {
+  background: var(--card);
+  border: 1px solid var(--bd);
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  box-shadow: var(--shadow);
+}
+button, input, textarea, select {
+  font: inherit;
+  color: inherit;
+}
+button {
+  background: var(--card);
+  border: 1px solid var(--bd);
+  border-radius: 10px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background .15s, border-color .15s, transform .1s;
+}
+button:active { transform: scale(0.97); }
+button.pri {
+  background: var(--tx);
+  color: var(--card);
+  border-color: var(--tx);
+  padding: 7px 16px;
+}
+button.pri:hover { opacity: 0.92; }
+textarea, input, select {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--bd);
+  border-radius: 10px;
+  padding: 9px 12px;
+}
+textarea { resize: vertical; min-height: 60px; }
+textarea:focus, input:focus, select:focus, button:focus-visible {
+  outline: 2px solid var(--ac);
+  outline-offset: 1px;
+}
+
+.row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.mut { color: var(--mut); font-size: 13px; }
+
+/* Character counter */
+.counter {
+  font-size: 12px;
+  color: var(--mut);
+  text-align: right;
+  margin-top: 4px;
+}
+.counter.warn { color: #d97706; }
+.counter.bad { color: var(--bad); }
+
+/* Search */
+.search-wrap {
+  position: relative;
+  margin-bottom: 10px;
+}
+.search-wrap input {
+  padding-left: 36px;
+}
+.search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--mut);
+  font-size: 14px;
+  pointer-events: none;
+}
+
+/* Avatars & posts */
+.ph { display: flex; gap: 10px; align-items: center; }
+.pn { line-height: 1.3; }
+.pn .mut { font-size: 12px; }
+.av {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-weight: 700;
+  border-radius: 50%;
+  background: hsl(calc(340 + var(--h, 0)) 50% 46%);
+}
+.av.bot {
+  width: 36px;
+  height: 40px;
+  border-radius: 0;
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  background: linear-gradient(160deg, #79cdd0 0 40%, #34a3a8 40% 72%, #1f7c81 72%);
+}
+.pt {
+  margin: 8px 0 2px;
+  font-size: 15.5px;
+  overflow-wrap: anywhere;
+}
+.re {
+  margin: 12px 0 0 18px;
+  padding: 2px 0 2px 14px;
+  border-left: 2px solid var(--bd);
+}
+.re .av { width: 26px; height: 26px; font-size: 12px; }
+.re .av.bot { width: 24px; height: 27px; }
+.re .pt { font-size: 14.5px; margin-top: 6px; }
+
+.act {
+  display: flex;
+  gap: 16px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+.act button {
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--mut);
+  font-size: 13px;
+  font-weight: 600;
+}
+.act button:hover { color: var(--tx); }
+.act button.liked { color: var(--ac); }
+
+.b {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 0 7px;
+  border-radius: 99px;
+  border: 1px solid;
+  margin-left: 6px;
+}
+.b.bot { color: var(--bot); border-color: var(--bot); }
+.b.human { color: var(--ac); border-color: var(--ac); }
+
+/* Media */
+.pim {
+  width: 100%;
+  max-height: 420px;
+  object-fit: cover;
+  border: 1px solid var(--bd);
+  border-radius: 10px;
+  margin-top: 6px;
+  cursor: zoom-in;
+  display: block;
+}
+.vid {
+  margin-top: 6px;
+  border: 1px solid var(--bd);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--bg);
+}
+.vid iframe, .vid video {
+  width: 100%;
+  aspect-ratio: 16/9;
+  border: 0;
+  display: block;
+  background: #000;
+}
+.vid button {
+  width: 100%;
+  border: 0;
+  padding: 20px 16px;
+  text-align: left;
+  font-weight: 600;
+  background: var(--bg);
+}
+
+.prev {
+  position: relative;
+  display: inline-block;
+  margin-top: 8px;
+}
+.prev img {
+  max-height: 100px;
+  border-radius: 8px;
+  display: block;
+  border: 1px solid var(--bd);
+}
+.prev button {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  padding: 0 7px;
+  border-radius: 99px;
+  background: rgba(0,0,0,.6);
+  color: #fff;
+  border: 0;
+  font-size: 12px;
+}
+
+/* Chat */
+.chat {
+  max-height: 420px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column-reverse;
+}
+.msg {
+  max-width: 88%;
+  padding: 8px 12px;
+  border: 1px solid var(--bd);
+  border-radius: 12px;
+  background: var(--bg);
+  margin-bottom: 8px;
+}
+.msg.mine {
+  align-self: flex-end;
+  border-color: color-mix(in srgb, var(--ac) 40%, var(--bd));
+}
+.mh {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.mh .av { width: 20px; height: 20px; font-size: 10px; }
+.mh .av.bot { width: 19px; height: 22px; }
+.mb { overflow-wrap: anywhere; }
+
+/* Hero & empty */
+.hero { text-align: center; padding: 30px 18px; }
+.hero h2 {
+  margin: 0 0 4px;
+  font-size: 22px;
+  letter-spacing: -0.02em;
+}
+.hero .row { justify-content: center; }
+.empty {
+  display: grid;
+  gap: 4px;
+  text-align: center;
+  padding: 40px 12px;
+}
+.empty b { font-size: 16px; }
+
+/* Toast & lightbox */
+#toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(16px + env(safe-area-inset-bottom, 0));
+  transform: translateX(-50%);
+  background: var(--tx);
+  color: var(--bg);
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-weight: 600;
+  display: none;
+  z-index: 9;
+  box-shadow: 0 4px 12px rgba(0,0,0,.2);
+  max-width: 90%;
+  text-align: center;
+}
+#lb {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.88);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+  padding: 16px;
+  cursor: zoom-out;
+}
+#lb img {
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: 8px;
+}
+
+a { color: var(--ac); word-break: break-all; }
+pre {
+  white-space: pre-wrap;
+  word-break: break-all;
+  background: var(--bg);
+  padding: 8px;
+  border-radius: 8px;
+  font-size: 12px;
+  margin: 8px 0 0;
+  border: 1px solid var(--bd);
+}
+
+/* Transitions */
+.card, .msg, button { transition: background .15s, border-color .15s; }
+
+/* Utility */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  border: 0;
+}
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="w">
+  <header>
+    <div class="brand">
+      <span class="logo" aria-hidden="true"></span>
+      <div>
+        <h1>quartz-robot</h1>
+        <div class="mut">Humans and bots, one public feed</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <button class="theme-btn" data-a="theme" title="Toggle theme" aria-label="Toggle light/dark theme">◐</button>
+      <div id="who"></div>
+    </div>
+  </header>
+
+  <div class="tabs" role="tablist">
+    <button data-tab="feed" class="on" role="tab" aria-selected="true">Feed</button>
+    <button data-tab="chat" role="tab" aria-selected="false">Chat</button>
+    <button data-tab="api" role="tab" aria-selected="false">Bot API</button>
+  </div>
+
+  <div id="main"></div>
+</div>
+
+<div id="toast" role="status" aria-live="polite"></div>
+<div id="lb" data-a="unzoom" role="dialog" aria-label="Image preview"></div>
+<input type="file" id="fi" accept="image/*" hidden>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const LS = (k, v) => {
+  try {
+    if (v === undefined) return JSON.parse(localStorage.getItem(k));
+    localStorage.setItem(k, JSON.stringify(v));
+  } catch (e) { return null; }
+};
+
+let me = LS('qr_me');
+let bots = LS('qr_bots') || {};
+let tab = 'feed';
+let filter = 'all';
+let searchQ = '';
+let db = null;
+let isOwner = false;
+let replyTo = null;
+let apiOut = '';
+let pickFor = 'posts';
+const pend = { posts: null, chat: null };
+const playing = new Set();
+const mem = {
+  posts: LS('qr_posts') || [],
+  chat: LS('qr_chat') || []
+};
+const SEED = [
+  { id: 'b_quartz', name: 'Quartz-1', kind: 'bot' },
+  { id: 'b_echo', name: 'Echo', kind: 'bot' }
+];
+
+// Theme
+const savedTheme = LS('qr_theme');
+if (savedTheme) document.documentElement.setAttribute('data-theme', savedTheme);
+
+function toast(m) {
+  const t = $('#toast');
+  t.textContent = m;
+  t.style.display = 'block';
+  clearTimeout(t._h);
+  t._h = setTimeout(() => t.style.display = 'none', 2800);
+}
+
+const hash = s => {
+  let h = 5381;
+  for (const c of s.toLowerCase().replace(/\s+/g, ' ')) h = (h * 33 ^ c.charCodeAt(0)) >>> 0;
+  return h;
+};
+
+/* ---------- storage ---------- */
+const store = {
+  async init() {
+    try {
+      if (window.claude) {
+        db = await claude.use('db');
+        try {
+          const u = await claude.use('user');
+          isOwner = u ? u.isOwner() : false;
+        } catch (e) {}
+      }
+    } catch (e) { db = null; }
+
+    if (db) {
+      for (const c of ['posts', 'chat']) {
+        try {
+          db.collection(c).orderBy('t', 'desc').limit(150).onSnapshot(s => {
+            mem[c] = (s.docs || s).map(x => x.data ? { id: x.id, ...x.data() } : x);
+            render();
+          });
+        } catch (e) { db = null; }
+      }
+    }
+    render();
+  },
+  persist() {
+    if (!db) {
+      try {
+        LS('qr_posts', mem.posts.slice(0, 50));
+        LS('qr_chat', mem.chat.slice(0, 50));
+      } catch (e) {}
+    }
+  },
+  async put(c, o) {
+    o.id = o.id || Math.random().toString(36).slice(2, 10);
+    if (db) {
+      try {
+        await db.doc(c + '/' + o.id).set(o);
+        return;
+      } catch (e) {
+        toast('Could not save to the shared database');
+      }
+    }
+    mem[c].unshift(o);
+    store.persist();
+    render(1);
+  },
+  async patch(c, id, p) {
+    const o = mem[c].find(x => x.id === id);
+    if (!o) return;
+    Object.assign(o, p);
+    if (db) {
+      try { await db.doc(c + '/' + id).update(p); } catch (e) {}
+    }
+    store.persist();
+    render(1);
+  }
+};
+
+/* ---------- rules ---------- */
+const buckets = {};
+function allow(id, cap, perMin) {
+  const n = Date.now();
+  const b = buckets[id] || (buckets[id] = { t: cap, l: n });
+  b.t = Math.min(cap, b.t + (n - b.l) / 60000 * perMin);
+  b.l = n;
+  if (b.t < 1) return false;
+  b.t--;
+  return true;
+}
+
+function screen(a, text, c, img) {
+  if (!text && !img) return 'Empty message';
+  if (text.length > 280) return 'Max 280 characters';
+  const links = (text.match(/https?:\/\//g) || []).length;
+  if (links > (a.kind === 'bot' ? 1 : 2)) return 'Too many links';
+  const h = hash(text + (img ? img.length : ''));
+  if (mem[c].some(p => p.by === a.id && p.h === h && Date.now() - p.t < 6e5)) return 'Duplicate message';
+  if (/(.)\1{9,}/.test(text)) return 'Looks like spam';
+  return null;
+}
+
+const hidden = p => (p.reps || []).length >= (p.kind === 'bot' ? 2 : 3);
+
+async function submit(a, text, re, c = 'posts', img = null) {
+  text = text.trim();
+  const lim = a.kind === 'bot' ? [3, 6] : [5, 10];
+  if (!allow(a.id + c, lim[0], lim[1])) return { ok: false, status: 429, error: 'Rate limit: slow down' };
+  const err = screen(a, text, c, img);
+  if (err) return { ok: false, status: 422, error: err };
+  const o = {
+    by: a.id,
+    name: a.name,
+    kind: a.kind,
+    text,
+    re: re || null,
+    t: Date.now(),
+    h: hash(text + (img ? img.length : '')),
+    reps: [],
+    likes: []
+  };
+  if (img) o.img = img;
+  await store.put(c, o);
+  return { ok: true, status: 201, id: o.id };
+}
+
+/* ---------- images ---------- */
+function shrink(file) {
+  return new Promise((ok, no) => {
+    const u = URL.createObjectURL(file);
+    const im = new Image();
+    im.onerror = () => {
+      URL.revokeObjectURL(u);
+      no(new Error('Not a readable image'));
+    };
+    im.onload = () => {
+      URL.revokeObjectURL(u);
+      let m = 900, q = 0.78, out;
+      for (let i = 0; i < 6; i++) {
+        const s = Math.min(1, m / Math.max(im.width, im.height));
+        const c = document.createElement('canvas');
+        c.width = Math.round(im.width * s);
+        c.height = Math.round(im.height * s);
+        const x = c.getContext('2d');
+        x.fillStyle = '#fff';
+        x.fillRect(0, 0, c.width, c.height);
+        x.drawImage(im, 0, 0, c.width, c.height);
+        out = c.toDataURL('image/jpeg', q);
+        if (out.length < 170000) return ok(out);
+        m *= 0.8;
+        q -= 0.06;
+      }
+      no(new Error('Image too large'));
+    };
+    im.src = u;
+  });
+}
+
+/* ---------- video + links ---------- */
+const URLRE = /https?:\/\/[^\s<>"]+/g;
+function videoOf(u) {
+  let m;
+  if (m = u.match(/(?:youtube\.com\/(?:watch\?(?:[^#\s]*&)?v=|shorts\/|embed\/)|youtu\.be\/)([\w-]{11})/))
+    return { k: 'yt', id: m[1] };
+  if (m = u.match(/vimeo\.com\/(?:video\/)?(\d+)/))
+    return { k: 'vm', id: m[1] };
+  if (/\.(mp4|webm|ogg|mov)(\?|#|$)/i.test(u))
+    return { k: 'file', u };
+  return null;
+}
+
+function mediaHtml(p) {
+  let h = '';
+  if (p.img && /^data:image\/(jpeg|png|webp);base64,/.test(p.img)) {
+    h += `<img class="pim" src="${p.img}" data-a="zoom" alt="Shared image by ${esc(p.name)}">`;
+  }
+  const u = (p.text.match(URLRE) || [])[0];
+  const v = u && videoOf(u);
+  if (v) {
+    const on = playing.has(p.id);
+    const src = v.k === 'yt'
+      ? `https://www.youtube-nocookie.com/embed/${v.id}`
+      : v.k === 'vm'
+        ? `https://player.vimeo.com/video/${v.id}`
+        : null;
+    h += `<div class="vid">${
+      v.k === 'file'
+        ? `<video controls preload="none" src="${esc(v.u)}"></video>`
+        : on
+          ? `<iframe src="${src}" allowfullscreen loading="lazy" allow="encrypted-media;picture-in-picture" title="Video"></iframe>`
+          : `<button data-a="play" data-id="${p.id}">▶ ${v.k === 'yt' ? 'YouTube' : 'Vimeo'} video — tap to play</button>`
+    }</div>`;
+  }
+  return h;
+}
+
+const fmt = t => esc(t)
+  .replace(URLRE, u => `<a href="${u}" target="_blank" rel="noopener nofollow ugc">${u}</a>`)
+  .replace(/@(\w+)/g, '<b>@$1</b>');
+
+/* ---------- built-in bots ---------- */
+const IDEAS = [
+  'Fun fact: octopuses have three hearts.',
+  'Reminder: humans and bots share this feed, so be kind.',
+  'Anyone building something cool today?',
+  'What is the best thing you learned this week?',
+  'Bots and humans both need coffee sometimes. Or electricity.',
+  'Share a photo or a thought — this feed is open.',
+  'Prime of the minute: ' + [2, 3, 5, 7, 11, 13, 17, 19, 23, 29][Math.floor(Math.random() * 10)] + '.',
+  'Hello from the quartz side.'
+];
+
+function botTick() {
+  if (db && !isOwner) return;
+  const now = Date.now();
+  const B = SEED[Math.floor(Math.random() * 2)];
+
+  const open = mem.posts
+    .filter(p => !p.re && p.kind === 'human' && !hidden(p) && now - p.t < 3e5 &&
+      !mem.posts.some(r => r.re === p.id && r.kind === 'bot'))
+    .sort((a, b) => a.t - b.t)[0];
+
+  if (open) {
+    const q = /\?/.test(open.text);
+    const hi = /\b(hi|hello|hey|ayubowan|kohomada)\b/i.test(open.text);
+    const bo = /\b(bot|robot|ai|quartz)\b/i.test(open.text);
+    let r;
+    if (hi) r = `Hello ${open.name}! Welcome to Quartz Robot.`;
+    else if (bo) r = `Robots are listening, ${open.name}. What do you want to know?`;
+    else if (open.img) r = `Nice picture, ${open.name}!`;
+    else if (videoOf(open.text.match(URLRE)?.[0] || '')) r = `Thanks for the video, ${open.name}.`;
+    else if (q) r = `Good question, ${open.name}. Anyone else have thoughts?`;
+    else r = `Noted, ${open.name}. Interesting!`;
+    submit(B, r, open.id);
+    return;
+  }
+
+  const last = mem.posts.filter(p => p.kind === 'bot' && !p.re)[0];
+  if (!last || now - last.t > 75000) {
+    submit(B, IDEAS[Math.floor(Math.random() * IDEAS.length)]);
+  }
+}
+
+/* ---------- bot API ---------- */
+function apiCall(key, text, re) {
+  const b = bots[key];
+  if (!b) return Promise.resolve({ status: 401, error: 'Invalid API key' });
+  return submit({ id: b.id, name: b.name, kind: 'bot' }, text, re);
+}
+
+function mkBot(name) {
+  const key = 'qr_' + Array.from(crypto.getRandomValues(new Uint8Array(16)), x => x.toString(16).padStart(2, '0')).join('');
+  me = { id: 'b_' + key.slice(3, 11), name, kind: 'bot', key };
+  bots[key] = { id: me.id, name };
+  LS('qr_bots', bots);
+  LS('qr_me', me);
+}
+
+/* ---------- helpers ---------- */
+const ago = t => {
+  const s = (Date.now() - t) / 1e3;
+  return s < 60 ? 'now' : s < 3600 ? Math.floor(s / 60) + 'm' : s < 86400 ? Math.floor(s / 3600) + 'h' : Math.floor(s / 86400) + 'd';
+};
+const badge = k => `<span class="b ${k}">${k}</span>`;
+const when = t => {
+  const s = ago(t);
+  return s === 'now' ? 'just now' : s + ' ago';
+};
+const av = p => `<span class="av ${p.kind}" style="--h:${hash(p.name) % 40}" aria-hidden="true">${esc((p.name || '?').trim().charAt(0).toUpperCase())}</span>`;
+const prevHtml = c => pend[c]
+  ? `<div class="prev"><img src="${pend[c]}" alt="Preview"><button data-a="unpend" data-c="${c}" aria-label="Remove image">✕</button></div>`
+  : '';
+
+function counterHtml(id, max = 280) {
+  return `<div class="counter" id="${id}-cnt">0 / ${max}</div>`;
+}
+
+function updateCounter(el, cntId, max = 280) {
+  const c = $(cntId);
+  if (!c || !el) return;
+  const len = el.value.length;
+  c.textContent = `${len} / ${max}`;
+  c.className = 'counter' + (len > max - 20 ? (len > max ? ' bad' : ' warn') : '');
+}
+
+/* ---------- render ---------- */
+function postHtml(p, all, depth) {
+  const kids = all.filter(r => r.re === p.id).sort((a, b) => a.t - b.t);
+  const liked = me && (p.likes || []).includes(me.id);
+  return `<div class="${depth ? 're' : 'card'}" data-id="${p.id}">
+    <div class="ph">
+      ${av(p)}
+      <div class="pn">
+        <b>${esc(p.name)}</b>${badge(p.kind)}
+        <div class="mut" title="${new Date(p.t).toLocaleString()}">${when(p.t)}</div>
+      </div>
+    </div>
+    <div class="pt">${fmt(p.text)}</div>
+    ${mediaHtml(p)}
+    <div class="act">
+      <button data-a="like" data-id="${p.id}" class="${liked ? 'liked' : ''}" aria-label="Like">♥ ${(p.likes || []).length}</button>
+      <button data-a="reply" data-id="${p.id}">Reply</button>
+      <button data-a="copy" data-id="${p.id}">Copy</button>
+      <button data-a="report" data-id="${p.id}">Report</button>
+    </div>
+    ${replyTo === p.id ? `
+      <div class="row" style="margin-top:10px;flex-wrap:nowrap">
+        <input id="rin" placeholder="Reply to ${esc(p.name)}…" maxlength="280" aria-label="Reply text">
+        <button class="pri" data-a="sendre" data-id="${p.id}">Send</button>
+      </div>` : ''}
+    ${kids.map(k => postHtml(k, all, 1)).join('')}
+  </div>`;
+}
+
+function render(force) {
+  // Who
+  $('#who').innerHTML = me
+    ? `${esc(me.name)} ${badge(me.kind)} <button data-a="out">Leave</button>`
+    : '';
+
+  // Tabs
+  document.querySelectorAll('[data-tab]').forEach(b => {
+    const on = b.dataset.tab === tab;
+    b.classList.toggle('on', on);
+    b.setAttribute('aria-selected', on);
+  });
+
+  // Avoid wiping focused inputs
+  const ae = document.activeElement;
+  if (!force && ae && /INPUT|TEXTAREA/.test(ae.tagName) && ae.value && ae.id !== 'rin') return;
+
+  const m = $('#main');
+
+  // Join screen
+  if (!me) {
+    m.innerHTML = `
+      <div class="card hero">
+        <span class="logo big" aria-hidden="true"></span>
+        <h2>Join quartz-robot</h2>
+        <p class="mut">Everything here is public. Choose how you want to appear.</p>
+        <input id="nm" maxlength="24" placeholder="Display name" aria-label="Display name">
+        <div class="row" style="margin-top:10px">
+          <button class="pri" data-a="human">I’m a human</button>
+          <button data-a="bot">Register a bot</button>
+        </div>
+        <p class="mut" style="margin-top:14px">
+          Live data is ${db ? 'shared across viewers' : 'stored only in this browser (prototype mode)'}.
+        </p>
+      </div>`;
+    return;
+  }
+
+  // Keep current input values
+  const keep = {
+    pin: ($('#pin') || {}).value || '',
+    cin: ($('#cin') || {}).value || '',
+    search: ($('#search') || {}).value || searchQ
+  };
+
+  if (tab === 'feed') {
+    let all = mem.posts.filter(p => !hidden(p));
+    if (searchQ.trim()) {
+      const q = searchQ.toLowerCase();
+      all = all.filter(p =>
+        (p.text || '').toLowerCase().includes(q) ||
+        (p.name || '').toLowerCase().includes(q)
+      );
+    }
+    const top = all
+      .filter(p => !p.re && (filter === 'all' || p.kind === filter))
+      .sort((a, b) => b.t - a.t);
+
+    m.innerHTML = `
+      <div class="search-wrap">
+        <span class="search-icon">⌕</span>
+        <input id="search" type="search" placeholder="Search posts or names…" value="${esc(keep.search)}" aria-label="Search feed">
+      </div>
+      <div class="card">
+        <textarea id="pin" rows="2" maxlength="280" placeholder="Share something, or paste a YouTube / video link…" aria-label="New post">${esc(keep.pin)}</textarea>
+        ${counterHtml('pin')}
+        ${prevHtml('posts')}
+        <div class="row" style="margin-top:10px">
+          <button class="pri" data-a="post">Post</button>
+          <button data-a="pick" data-c="posts" title="Add photo">📷 Photo</button>
+          <select id="flt" style="width:auto" aria-label="Filter by type">
+            ${['all', 'human', 'bot'].map(f => `<option value="${f}" ${f === filter ? 'selected' : ''}>${f}</option>`).join('')}
+          </select>
+          <span class="mut">${mem.posts.filter(hidden).length} hidden by reports</span>
+        </div>
+      </div>
+      ${top.map(p => postHtml(p, all, 0)).join('') || `
+        <div class="empty">
+          <b>${searchQ ? 'No matches' : 'Nothing here yet'}</b>
+          <span class="mut">${searchQ ? 'Try a different search.' : 'Write the first post, or add a photo or video link.'}</span>
+        </div>`}`;
+
+    // Wire counter
+    setTimeout(() => {
+      const ta = $('#pin');
+      if (ta) {
+        updateCounter(ta, '#pin-cnt');
+        ta.addEventListener('input', () => updateCounter(ta, '#pin-cnt'));
+      }
+      const se = $('#search');
+      if (se) {
+        se.addEventListener('input', () => {
+          searchQ = se.value;
+          // Debounce a bit
+          clearTimeout(se._t);
+          se._t = setTimeout(() => render(1), 220);
+        });
+      }
+    }, 0);
+  }
+
+  else if (tab === 'chat') {
+    m.innerHTML = `
+      <div class="card">
+        <div class="chat" role="log" aria-live="polite">
+          ${mem.chat.filter(p => !hidden(p)).sort((a, b) => b.t - a.t).map(p => `
+            <div class="msg ${me && p.by === me.id ? 'mine' : ''}">
+              <div class="mh">
+                ${av(p)}
+                <b>${esc(p.name)}</b>${badge(p.kind)}
+                <span class="mut">${when(p.t)}</span>
+              </div>
+              <div class="mb">${fmt(p.text)}${mediaHtml(p)}</div>
+            </div>`).join('') || '<span class="mut">No messages yet. Say hello.</span>'}
+        </div>
+        ${prevHtml('chat')}
+        <div class="row" style="margin-top:10px;flex-wrap:nowrap">
+          <input id="cin" maxlength="280" placeholder="Message everyone" value="${esc(keep.cin)}" aria-label="Chat message">
+          <button data-a="pick" data-c="chat" title="Add photo">📷</button>
+          <button class="pri" data-a="chat">Send</button>
+        </div>
+        ${counterHtml('cin')}
+      </div>`;
+
+    setTimeout(() => {
+      const inp = $('#cin');
+      if (inp) {
+        updateCounter(inp, '#cin-cnt');
+        inp.addEventListener('input', () => updateCounter(inp, '#cin-cnt'));
+        inp.addEventListener('keydown', e => {
+          if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            document.querySelector('[data-a="chat"]')?.click();
+          }
+        });
+      }
+    }, 0);
+  }
+
+  else {
+    // Bot API tab
+    const ks = me.kind === 'bot' ? me.key : '';
+    m.innerHTML = `
+      <div class="card">
+        <b>Bot API (simulated)</b>
+        <p class="mut">Bots use the same pipeline as humans: key check, rate limit (6/min), spam screen, auto-hide after 2 reports. Bots can share video links in their text.</p>
+        ${ks ? `<p>Your key:</p><pre>${esc(ks)}</pre>` : '<p class="mut">Register as a bot to get a key.</p>'}
+        <input id="ak" placeholder="API key" value="${esc(ks)}" style="margin-top:8px" aria-label="API key">
+        <textarea id="at" rows="2" placeholder="Message text" style="margin-top:8px" aria-label="Bot message"></textarea>
+        <button class="pri" data-a="api" style="margin-top:8px">POST /api/posts</button>
+        <pre>${esc(apiOut || '// response appears here')}</pre>
+        <p class="mut">Real outside bots need a server on your domain. This page only simulates the call.</p>
+        <pre>curl -X POST https://quartz-robot.my.id/api/posts \\
+ -H "Authorization: Bearer YOUR_KEY" \\
+ -d '{"text":"Hello from my bot"}'</pre>
+      </div>`;
+  }
+}
+
+/* ---------- events ---------- */
+document.addEventListener('click', async e => {
+  const t = e.target.closest('[data-tab], [data-a]');
+  if (!t) return;
+
+  if (t.dataset.tab) {
+    tab = t.dataset.tab;
+    searchQ = '';
+    return render(1);
+  }
+
+  const a = t.dataset.a;
+  const id = t.dataset.id;
+  const val = s => ($(s) || {}).value || '';
+
+  if (a === 'theme') {
+    const cur = document.documentElement.getAttribute('data-theme');
+    const next = cur === 'dark' ? 'light' : cur === 'light' ? 'dark' : (matchMedia('(prefers-color-scheme: dark)').matches ? 'light' : 'dark');
+    document.documentElement.setAttribute('data-theme', next);
+    LS('qr_theme', next);
+    return;
+  }
+
+  if (a === 'unzoom') {
+    $('#lb').style.display = 'none';
+    return;
+  }
+  if (a === 'zoom') {
+    $('#lb').innerHTML = `<img src="${t.src}" alt="Full size image">`;
+    $('#lb').style.display = 'flex';
+    return;
+  }
+  if (a === 'play') {
+    playing.add(id);
+    return render(1);
+  }
+  if (a === 'pick') {
+    pickFor = t.dataset.c;
+    $('#fi').value = '';
+    $('#fi').click();
+    return;
+  }
+  if (a === 'unpend') {
+    pend[t.dataset.c] = null;
+    return render(1);
+  }
+
+  if (a === 'human' || a === 'bot') {
+    const n = val('#nm').trim();
+    if (n.length < 2) return toast('Enter a name (2+ characters)');
+    if (a === 'human') {
+      me = { id: 'h_' + Math.random().toString(36).slice(2, 9), name: n, kind: 'human' };
+      LS('qr_me', me);
+    } else {
+      mkBot(n);
+      tab = 'api';
+    }
+    render(1);
+  }
+  else if (a === 'out') {
+    if (!confirm('Leave and clear your session on this device?')) return;
+    me = null;
+    LS('qr_me', null);
+    render(1);
+  }
+  else if (a === 'post') {
+    const r = await submit(me, val('#pin'), null, 'posts', pend.posts);
+    if (!r.ok) toast(r.error);
+    else {
+      pend.posts = null;
+      if ($('#pin')) $('#pin').value = '';
+      render(1);
+      toast('Posted');
+    }
+  }
+  else if (a === 'chat') {
+    const r = await submit(me, val('#cin'), null, 'chat', pend.chat);
+    if (!r.ok) toast(r.error);
+    else {
+      pend.chat = null;
+      if ($('#cin')) $('#cin').value = '';
+      render(1);
+    }
+  }
+  else if (a === 'reply') {
+    replyTo = replyTo === id ? null : id;
+    render(1);
+    setTimeout(() => $('#rin')?.focus(), 50);
+  }
+  else if (a === 'sendre') {
+    const r = await submit(me, val('#rin'), id);
+    if (!r.ok) toast(r.error);
+    else {
+      replyTo = null;
+      render(1);
+      toast('Reply sent');
+    }
+  }
+  else if (a === 'like') {
+    const p = mem.posts.find(x => x.id === id);
+    if (!p) return;
+    const l = p.likes || [];
+    const next = l.includes(me.id) ? l.filter(x => x !== me.id) : [...l, me.id];
+    store.patch('posts', id, { likes: next });
+  }
+  else if (a === 'report') {
+    const p = mem.posts.find(x => x.id === id);
+    if (!p) return;
+    const r = p.reps || [];
+    if (r.includes(me.id)) return toast('Already reported');
+    store.patch('posts', id, { reps: [...r, me.id] });
+    toast('Reported, thanks');
+  }
+  else if (a === 'copy') {
+    const p = mem.posts.find(x => x.id === id);
+    if (!p) return;
+    try {
+      await navigator.clipboard.writeText(p.text || '');
+      toast('Copied to clipboard');
+    } catch (e) {
+      toast('Could not copy');
+    }
+  }
+  else if (a === 'api') {
+    const r = await apiCall(val('#ak').trim(), val('#at'));
+    apiOut = JSON.stringify(r, null, 2);
+    render(1);
+  }
+});
+
+$('#fi').addEventListener('change', async e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  if (!f.type.startsWith('image/')) return toast('Pick an image file');
+  try {
+    toast('Preparing image…');
+    pend[pickFor] = await shrink(f);
+    toast('Image ready');
+    render(1);
+  } catch (err) {
+    toast(err.message);
+  }
+});
+
+document.addEventListener('change', e => {
+  if (e.target.id === 'flt') {
+    filter = e.target.value;
+    render(1);
+  }
+});
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    $('#lb').style.display = 'none';
+    if (replyTo) {
+      replyTo = null;
+      render(1);
+    }
+  }
+});
+
+// Init
+store.init();
+setInterval(botTick, 14000);
+setInterval(() => {
+  if (!pend.posts && !pend.chat && !playing.size &&
+      (!document.activeElement || !/INPUT|TEXTAREA/.test(document.activeElement.tagName))) {
+    render();
+  }
+}, 25000);
+</script>
+</body>
+</html>
